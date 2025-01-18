@@ -34,4 +34,5 @@ jobs:
           deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
           external_repository: IfcOpenShell/bonsaibim_org_docs
           publish_branch: main
+          cname: docs.bonsaibim.org
           publish_dir: src/bonsai/docs/_build/html
