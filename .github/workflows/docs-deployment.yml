@@ -1,9 +1,7 @@
-name: Build and Deploy Documentation
+name: Build and Deploy Stable Documentation
 
 on:
-  push:
-    branches:
-      - main  # Trigger the workflow on pushes to the main branch
+  workflow_dispatch:  # Manual trigger
 
 jobs:
   build:
@@ -28,7 +26,7 @@ jobs:
           cd src/bonsai/docs
           make html
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages (Stable)
         uses: peaceiris/actions-gh-pages@v4
         with:
           deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
