@@ -18,8 +18,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          pip install sphinx
+          cd src/bonsai/docs
+          pip install -r requirements.txt  # Run pip install from the docs directory
 
       - name: Build documentation
         run: |
