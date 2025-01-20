@@ -21,6 +21,7 @@ import bpy
 import bmesh
 import json
 import os
+import platform
 from ifcopenshell import entity_instance
 import ifcopenshell.api
 import ifcopenshell.util.element
@@ -32,7 +33,7 @@ import importlib
 from mathutils import Vector
 from pathlib import Path
 from bonsai.bim.ifc import IFC_CONNECTED_TYPE
-from typing import Any, Optional, Union, Literal, Iterable, Callable, TypeVar
+from typing import Any, Optional, Union, Literal, Iterable, Callable, TypeVar, Generator
 from typing_extensions import assert_never
 
 
@@ -143,17 +144,21 @@ class Blender(bonsai.core.tool.Blender):
         return f"{name} {i}"
 
     @classmethod
-    def get_active_object(cls) -> bpy.types.Object:
-        return getattr(bpy.context, "active_object", None) or bpy.context.view_layer.objects.active
+    def get_active_object(cls, is_selected: bool = False) -> bpy.types.Object:
+        obj = getattr(bpy.context, "active_object", None) or bpy.context.view_layer.objects.active
+        if not is_selected:
+            return obj
+        if obj in cls.get_selected_objects(include_active=False):
+            return obj
 
     @classmethod
-    def get_selected_objects(cls) -> set[bpy.types.Object]:
+    def get_selected_objects(cls, include_active: bool = True) -> set[bpy.types.Object]:
         """Get selected objects including active object."""
         if selected_objects := getattr(bpy.context, "selected_objects", None):
-            if active_obj := cls.get_active_object():
+            if include_active and (active_obj := cls.get_active_object()):
                 return set(selected_objects + [active_obj])
             return set(selected_objects)
-        if active_obj := cls.get_active_object():
+        if include_active and (active_obj := cls.get_active_object()):
             return {active_obj}
         return set()
 
@@ -429,6 +434,24 @@ class Blender(bonsai.core.tool.Blender):
         if blender_path.is_absolute():
             return blender_path
         return bpy.path.abspath("//") / blender_path
+
+    @classmethod
+    def ensure_bin_in_path(cls) -> None:
+        """Check 'bin' folder is in PATH, if not add for this session"""
+        bin_dir = str(Path(__file__).parent.parent.resolve() / "libs" / "bin")
+        current_path = os.environ["PATH"]
+        if bin_dir not in current_path:
+            os.environ["PATH"] = current_path + os.pathsep + bin_dir
+            # files need to be executable
+            if platform.system() != "Windows":
+                for filename in os.listdir(bin_dir):
+                    file_path = os.path.join(bin_dir, filename)
+                    if os.path.isfile(file_path):
+                        current_permissions = os.stat(file_path).st_mode
+                        try:
+                            os.chmod(file_path, current_permissions | 0o100)
+                        except PermissionError:
+                            pass
 
     @classmethod
     def get_default_selection_keypmap(cls) -> tuple:
@@ -1447,3 +1470,31 @@ class Blender(bonsai.core.tool.Blender):
             return "dm" if rgb_sum > threshold else "lm"
         except Exception:
             return "dm"  # Default to dark mode if an error occurs
+
+    @classmethod
+    def get_default_data_dir(cls) -> Path:
+        return Path(__file__).parent.parent / "bim" / "data"
+
+    @classmethod
+    def get_custom_data_dir(cls) -> Path:
+        return Path(bpy.context.scene.BIMProperties.data_dir)
+
+    @classmethod
+    def get_data_dir_path(cls, relative_path: Union[str, Path]) -> Path:
+        custom_path = cls.get_custom_data_dir() / relative_path
+        if custom_path.exists():
+            return custom_path
+        return cls.get_default_data_dir() / relative_path
+
+    @classmethod
+    def get_data_dir_paths(cls, relative_dir_path: Union[str, Path], glob_pattern: str) -> Generator[Path, None, None]:
+        custom_path = cls.get_custom_data_dir() / relative_dir_path
+        if custom_path.is_dir():
+            for filepath in custom_path.glob(glob_pattern):
+                yield filepath
+
+        default_data_dir = cls.get_default_data_dir()
+        if default_data_dir == custom_path:
+            return
+        for filepath in (default_data_dir / relative_dir_path).glob(glob_pattern):
+            yield filepath

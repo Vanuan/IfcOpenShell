@@ -364,7 +364,7 @@ class AddElement(bpy.types.Operator, tool.Ifc.Operator):
     def _execute(self, context):
         props = context.scene.BIMRootProperties
         predefined_type = (
-            props.userdefined_type if props.ifc_predefined_type == "USERDEFINED" else props.ifc_predefined_type
+            props.ifc_userdefined_type if props.ifc_predefined_type == "USERDEFINED" else props.ifc_predefined_type
         )
         representation_template = props.representation_template
         ifc_file = tool.Ifc.get()
@@ -556,6 +556,7 @@ class AddElement(bpy.types.Operator, tool.Ifc.Operator):
         elif representation_template == "ROOF":
             with context.temp_override(active_object=obj, selected_objects=[]):
                 bpy.ops.bim.add_roof()
+        bonsai.core.geometry.edit_object_placement(tool.Ifc, tool.Geometry, tool.Surveyor, obj=obj)
         tool.Blender.set_active_object(obj)
 
     def draw(self, context):

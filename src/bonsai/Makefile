@@ -85,7 +85,7 @@ BLENDER_PLATFORM:=windows-x64
 endif
 
 # Current build commit hash.
-OLD:=a2538fd
+OLD:=f425794
 .PHONY: bump
 bump:
 ifndef NEW
@@ -177,6 +177,8 @@ endif
 	# Is not platform specific but has platform specific dependencies.
 	cd build && . env/$(VENV_ACTIVATE) && $(PIP) download python-socketio[asyncio_client] $(PYPI_PLATFORM) --python-version $(PYPI_VERSION) --implementation $(PYPI_IMP) --only-binary=:all: --dest=./wheels
 	cd build && . env/$(VENV_ACTIVATE) && $(PIP) download aiohttp $(PYPI_PLATFORM) --python-version $(PYPI_VERSION) --implementation $(PYPI_IMP) --only-binary=:all: --dest=./wheels
+	# Required to access platform specific paths
+	cd build && . env/$(VENV_ACTIVATE) && $(PIP) download platformdirs --dest=./wheels
 	# Required by light module
 	cd build && . env/$(VENV_ACTIVATE) && $(PIP) download pytz --dest=./wheels
 	cd build && . env/$(VENV_ACTIVATE) && $(PIP) download tzfpy $(PYPI_PLATFORM) --python-version $(PYPI_VERSION) --implementation $(PYPI_IMP) --only-binary=:all: --dest=./wheels
@@ -226,8 +228,16 @@ endif
 		)" bdist_wheel
 	cp -r build/bpypolyskel-master/dist/*.whl build/wheels/
 
-	# Required for Desktop icon and file association
-	cp -r bonsai/libs/desktop build/bonsai/libs/
+	# folder for executable files
+	mkdir -p build/bonsai/libs/bin
+
+	# required for three-way git merging
+ifeq ($(PLATFORM), win)
+	cd build/bonsai/libs/bin && wget https://github.com/brunopostle/ifcmerge/releases/download/2024-06-24/ifcmerge.zip
+	cd build/bonsai/libs/bin && unzip ifcmerge.zip && rm ifcmerge.zip
+else
+	cd build/bonsai/libs/bin && wget https://raw.githubusercontent.com/brunopostle/ifcmerge/main/ifcmerge && chmod +x ifcmerge
+endif
 
 	# Generate translations module for Bonsai build
 	git clone https://github.com/IfcOpenShell/bonsai-translations.git build/working
@@ -348,6 +358,7 @@ endif
 	rm -rf build/bonsai/bim/
 	rm -rf build/bonsai/core/
 	rm -rf build/bonsai/tool/
+	rm -rf build/bonsai/libs/
 
 ifeq ($(IS_STABLE), TRUE)
 	cd build && zip -r bonsai_$(PYVERSION)-$(VERSION)-$(BLENDER_PLATFORM).zip ./bonsai

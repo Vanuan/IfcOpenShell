@@ -116,6 +116,7 @@ classes = [
     operator.RemoveIfcFile,
     operator.RevertClippingPlaneCut,
     operator.SelectDataDir,
+    operator.SelectCacheDir,
     operator.SelectIfcFile,
     operator.SelectSchemaDir,
     operator.SelectURIAttribute,
@@ -137,6 +138,7 @@ classes = [
     prop.BIMMeshProperties,
     prop.BIMFacet,
     prop.BIMFilterGroup,
+    prop.BIMSnapProperties,
     ui.BIM_UL_clipping_plane,
     ui.BIM_UL_generic,
     ui.BIM_UL_topics,
@@ -193,6 +195,7 @@ classes = [
     ui.BIM_PT_section_plane,
     ui.BIM_PT_section_with_cappings,
     ui.BIM_PT_decorators_overlay,
+    ui.BIM_PT_snappping,
 ]
 
 for mod in modules.values():
@@ -225,6 +228,7 @@ def register():
     bpy.app.handlers.load_post.append(handler.load_post)
     bpy.app.handlers.load_post.append(handler.loadIfcStore)
     bpy.types.Scene.BIMProperties = bpy.props.PointerProperty(type=prop.BIMProperties)
+    bpy.types.Scene.BIMSnapProperties = bpy.props.PointerProperty(type=prop.BIMSnapProperties)
     bpy.types.Screen.BIMAreaProperties = bpy.props.CollectionProperty(type=prop.BIMAreaProperties)
     bpy.types.Screen.BIMTabProperties = bpy.props.PointerProperty(type=prop.BIMTabProperties)
     bpy.types.Collection.BIMCollectionProperties = bpy.props.PointerProperty(type=prop.BIMCollectionProperties)
@@ -258,6 +262,10 @@ def register():
 
     icons = icon_preview
     bpy.app.translations.register("bonsai", translations_dict)
+
+    import bonsai.tool as tool
+
+    tool.Blender.ensure_bin_in_path()
 
 
 def unregister():

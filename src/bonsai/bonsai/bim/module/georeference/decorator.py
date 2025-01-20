@@ -64,8 +64,11 @@ class GeoreferenceDecorator:
         if not GeoreferenceData.is_loaded:
             GeoreferenceData.load()
 
-        self.calculate_angles(context)
         props = context.scene.BIMGeoreferenceProperties
+        if not props.model_origin:  # If this is empty, no georeferencing data has been loaded.
+            return
+
+        self.calculate_angles(context)
         e, n, h = [round(float(o), 7) for o in props.model_origin.split(",")]
         if (operation := GeoreferenceData.data["coordinate_operation"]) and (scale := operation.get("Scale", None)):
             e *= scale
@@ -75,8 +78,7 @@ class GeoreferenceDecorator:
         self.addon_prefs = tool.Blender.get_addon_preferences()
 
         self.font_id = 0
-        font_size = tool.Blender.scale_font_size(12 + (self.scale / 20))
-        blf.size(self.font_id, font_size)
+        blf.size(self.font_id, 12)
         color = self.addon_prefs.decorations_colour
         blf.color(self.font_id, *color)
         blf.enable(self.font_id, blf.SHADOW)
@@ -174,6 +176,10 @@ class GeoreferenceDecorator:
     def draw_geometry(self, context):
         if not GeoreferenceData.is_loaded:
             GeoreferenceData.load()
+
+        props = context.scene.BIMGeoreferenceProperties
+        if not props.model_origin:  # If this is empty, no georeferencing data has been loaded.
+            return
 
         self.calculate_angles(context)
 
@@ -308,7 +314,6 @@ class GeoreferenceDecorator:
                 self.draw_batch("LINES", verts, decorator_color_special, edges)
                 self.draw_dashed_line(location * 3, location * 6, decorator_color_error)
 
-        props = context.scene.BIMGeoreferenceProperties
         if props.has_blender_offset:
             location = GeoreferenceData.data["local_origin"]["location"]
             if location.length < 1000:

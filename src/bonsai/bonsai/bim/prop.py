@@ -21,6 +21,7 @@ import os
 import bpy
 import json
 import importlib
+import platformdirs
 import ifcopenshell
 import ifcopenshell.util.pset
 import ifcopenshell.util.unit
@@ -128,6 +129,12 @@ def update_data_dir(self: "BIMProperties", context: bpy.types.Context) -> None:
     import bonsai.bim.schema
 
     bonsai.bim.schema.ifc.data_dir = context.scene.BIMProperties.data_dir
+
+
+def update_cache_dir(self: "BIMProperties", context: bpy.types.Context) -> None:
+    import bonsai.bim.schema
+
+    bonsai.bim.schema.ifc.cache_dir = context.scene.BIMProperties.cache_dir
 
 
 def update_ifc_file(self: "BIMProperties", context: bpy.types.Context) -> None:
@@ -432,7 +439,12 @@ class BIMProperties(PropertyGroup):
         default=os.path.join(cwd, "schema") + os.path.sep, name="Schema Directory", update=update_schema_dir
     )
     data_dir: StringProperty(
-        default=os.path.join(cwd, "data") + os.path.sep, name="Data Directory", update=update_data_dir
+        default=(platformdirs.user_data_path("bonsai", roaming=True, ensure_exists=True) / "data").__str__(),
+        name="Data Directory",
+        update=update_data_dir,
+    )
+    cache_dir: StringProperty(
+        default=platformdirs.user_cache_dir("bonsai"), name="Cache Directory", update=update_cache_dir
     )
     has_blend_warning: BoolProperty(name="Has Blend Warning", default=False)
     pset_dir: StringProperty(default=os.path.join("psets") + os.path.sep, name="Default Psets Directory")
@@ -564,3 +576,10 @@ class BIMFacet(PropertyGroup):
 
 class BIMFilterGroup(PropertyGroup):
     filters: CollectionProperty(type=BIMFacet, name="filters")
+
+class BIMSnapProperties(PropertyGroup):
+    vertex: BoolProperty(name="Vertex")
+    edge: BoolProperty(name="Edge")
+    edge_center: BoolProperty(name="Edge Center")
+    face: BoolProperty(name="Face")
+    
