@@ -28,7 +28,7 @@ Hope your day's going well. :)
   <span class="sidebar-brand-text">{{ docstitle if docstitle else project }}</span>
   {%- endif %}
   {% endblock brand_content %}
-  <select id="doc-version-switcher" onchange="switchDocs()">
+  <select class="doc-version-switcher" onchange="switchDocs()">
     <option value="stable">Stable</option>
     <option value="unstable">Unstable</option>
   </select>
@@ -36,7 +36,7 @@ Hope your day's going well. :)
 
 <script>
   function switchDocs() {
-    var selectBox = document.getElementById('doc-version-switcher');
+    var selectBox = document.querySelector('.doc-version-switcher');
     var selectedValue = selectBox.options[selectBox.selectedIndex].value;
     if (selectedValue === 'unstable') {
       window.location.href = 'http://docs-unstable.bonsaibim.org/';
